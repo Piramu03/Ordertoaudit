@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>Orders</h2>
+  <p>
+    <a class="btn alt" href="{% url 'sales:admin_orders' %}">All</a>
+    {% for value, label in statuses %}
+      <a class="btn alt" href="?status={{ value }}">{{ label }}</a>
+    {% endfor %}
+  </p>
+  <div class="scroll"><table>
+    <tr><th>Order</th><th>Customer</th><th>Salesman</th><th>Date</th><th>Amount</th><th>Status</th></tr>
+    {% for o in orders %}
+    <tr>
+      <td><a href="{% url 'sales:order_detail' o.pk %}">ORD-{{ o.pk }}</a></td>
+      <td>{{ o.customer.name }}</td><td>{{ o.salesman.username }}</td>
+      <td>{{ o.created_at|date:"d M Y H:i" }}</td><td>Rs. {{ o.amount }}</td>
+      <td><span class="badge {{ o.status }}">{{ o.get_status_display }}</span></td>
+    </tr>
+    {% empty %}<tr><td colspan="6" class="muted">No orders.</td></tr>{% endfor %}
+  </table></div>
+</div>
+{% endblock %}

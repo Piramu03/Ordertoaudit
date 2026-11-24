@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>Audit log</h2>
+  <form method="get">
+    <label>Filter by action
+      <select name="action" onchange="this.form.submit()">
+        <option value="">All</option>
+        {% for a in actions %}<option value="{{ a }}" {% if a == action %}selected{% endif %}>{{ a }}</option>{% endfor %}
+      </select></label>
+  </form>
+  <div class="scroll"><table>
+    <tr><th>When</th><th>User</th><th>Action</th><th>Record</th><th>Detail</th></tr>
+    {% for l in logs %}
+    <tr><td>{{ l.created_at|date:"d M Y H:i" }}</td><td>{{ l.user.username }}</td><td>{{ l.action }}</td>
+        <td>{{ l.object_type }} #{{ l.object_id }}</td><td>{{ l.detail }}</td></tr>
+    {% empty %}<tr><td colspan="5" class="muted">Nothing logged yet.</td></tr>{% endfor %}
+  </table></div>
+</div>
+{% endblock %}

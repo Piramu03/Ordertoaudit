@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.tile{background:#fff;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.tile b{display:block;font-size:22px;margin-top:4px}
+</style>
+<h2>Dashboard <span class="muted">{{ today|date:"d M Y" }}</span></h2>
+
+<div class="grid">
+  <div class="tile">Orders today<b>{{ orders_today|length }}</b><span class="muted">Rs. {{ orders_today_value }}</span></div>
+  <div class="tile">Awaiting approval<b>{{ pending }}</b></div>
+  <div class="tile">Sales this month<b>Rs. {{ month_taxable }}</b><span class="muted">before tax</span></div>
+  <div class="tile">Outstanding dues<b>Rs. {{ dues_total }}</b></div>
+  <div class="tile">Over 30 days<b class="{% if dues_overdue > 0 %}err{% endif %}">Rs. {{ dues_overdue }}</b></div>
+</div>
+
+<div class="card">
+  <h3>Variance alerts (last 30 days)</h3>
+  {% for run, bad in alerts %}
+    <div class="row">
+      <div><a href="{% url 'production:run_detail' run.pk %}">RUN-{{ run.pk }}</a> · {{ run.product.name }} · {{ run.date|date:"d M" }}<br>
+        <span class="err">{% if run.yield_flagged %}Yield {{ run.yield_variance_pct }}% ({{ run.actual_output }} of {{ run.expected_output }}){% endif %}{% for l in bad %}{% if run.yield_flagged or not forloop.first %}; {% endif %}{{ l.item.name }} {{ l.variance_pct }}% over plan{% endfor %}</span>
+       </div>
+    </div>
+  {% empty %}<p class="muted">No variance beyond tolerance.</p>{% endfor %}
+</div>
+
+<div class="card">
+  <h3>Cost per packet (latest run)</h3>
+  {% for c in costs %}
+    <div class="row"><span>{{ c.run.product.name }} · <a href="{% url 'production:run_detail' c.run.pk %}">RUN-{{ c.run.pk }}</a></span>
+      <span><strong>Rs. {{ c.cpp }}</strong>
+        {% if c.margin_pct is not None %}<span class="muted"> · sells Rs. {{ c.price }} · margin Rs. {{ c.margin }} ({{ c.margin_pct }}%)</span>{% endif %}</span></div>
+  {% empty %}<p class="muted">No production runs yet.</p>{% endfor %}
+</div>
+
+<div class="card">
+  <h3>Orders today</h3>
+  {% for o in orders_today %}
+    <div class="row"><span>ORD-{{ o.pk }} · {{ o.customer.name }}</span>
+      <span>Rs. {{ o.amount }} <span class="badge {{ o.status }}">{{ o.get_status_display }}</span></span></div>
+  {% empty %}<p class="muted">No orders today yet.</p>{% endfor %}
+</div>
+
+<div class="card">
+  <h3>Outstanding dues (top customers)</h3>
+  {% for r in top_dues %}
+    <div class="row"><span>{{ r.0 }}</span><strong>Rs. {{ r.5 }}</strong></div>
+  {% empty %}<p class="muted">Nothing outstanding.</p>{% endfor %}
+  <p><a href="{% url 'reports:report' 'outstanding' %}">Full ageing report</a></p>
+</div>
+
+{% for label, rows in stock %}
+<div class="card">
+  <h3>Stock: {{ label }}</h3>
+  {% for item, bal in rows %}
+    <div class="row"><span>{{ item.name }}</span><strong>{{ bal|floatformat:"-3" }} {{ item.base_unit }}</strong></div>
+  {% endfor %}
+</div>
+{% endfor %}
+{% endblock %}

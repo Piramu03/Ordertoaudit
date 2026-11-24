@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>Reports</h2>
+  <form method="get">
+    <label style="display:inline-block;width:48%">From <input type="date" name="from" value="{{ start|date:'Y-m-d' }}"></label>
+    <label style="display:inline-block;width:48%">To <input type="date" name="to" value="{{ end|date:'Y-m-d' }}"></label>
+    <button class="btn alt" type="submit">Set period</button>
+  </form>
+  <p class="muted">Pick the period, then open a report. Each report can be exported to Excel, CSV or PDF.</p>
+</div>
+{% for group, items in groups %}
+<div class="card">
+  <h3>{{ group }}</h3>
+  {% for key, label in items %}
+    <div class="row"><a href="{% url 'reports:report' key %}?{{ qs }}">{{ label }}</a></div>
+  {% endfor %}
+</div>
+{% endfor %}
+{% endblock %}

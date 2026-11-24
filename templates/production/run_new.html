@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>New production run</h2>
+
+  <form method="get">
+    <label>Product
+      <select name="product" onchange="this.form.submit()">
+        {% for b in boms %}
+          <option value="{{ b.product_id }}" {% if b.pk == bom.pk %}selected{% endif %}>{{ b.product.name }}</option>
+        {% endfor %}
+      </select></label>
+  </form>
+
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="product" value="{{ bom.product_id }}">
+    <label>Number of batches <input id="batches" type="number" step="any" min="0" name="batches" value="1" required></label>
+    <p>Expected output: <strong id="expected" data-base="{{ bom.batch_yield }}">{{ bom.batch_yield }}</strong> packets
+       <span class="muted">(BOM: {{ bom.batch_yield }} per batch, tolerance {{ bom.tolerance_pct }}%)</span></p>
+
+    <div class="scroll"><table>
+      <tr><th>Material</th><th>Planned</th><th>Actually used (total)</th><th>of which wasted</th></tr>
+      {% for l in lines %}
+      <tr>
+        <td>{{ l.item.name }} ({{ l.item.base_unit }})</td>
+        <td class="planned" data-qty="{{ l.qty_per_batch }}" data-item="{{ l.item_id }}">{{ l.qty_per_batch }}</td>
+        <td><input class="actual" id="actual_{{ l.item_id }}" type="number" step="any" min="0" name="actual_{{ l.item_id }}" value="{{ l.qty_per_batch }}" required></td>
+        <td><input type="number" step="any" min="0" name="waste_{{ l.item_id }}" value="0"></td>
+      </tr>
+      {% endfor %}
+    </table></div>
+    <p class="muted">"Actually used" is the total taken from stock, including damaged or scrap items. Example: 188 good pouches + 6 damaged = 194 used, 6 wasted.</p>
+
+    <label>Actual good output (packets) <input type="number" step="1" min="0" name="actual_output" required></label>
+    <label>Labour cost (Rs., optional) <input type="number" step="0.01" min="0" name="labour" value="0"></label>
+    <label>Gas / power cost (Rs., optional) <input type="number" step="0.01" min="0" name="power" value="0"></label>
+    <button class="btn ok" type="submit">Save run (updates stock)</button>
+  </form>
+</div>
+<script>
+const b = document.getElementById('batches'), exp = document.getElementById('expected');
+const base = parseFloat(exp.dataset.base);
+const fmt = n => (Math.round(n * 1000) / 1000).toString();
+function update() {
+  const k = parseFloat(b.value) || 0;
+  exp.textContent = Math.round(base * k);
+  document.querySelectorAll('.planned').forEach(td => {
+    const p = parseFloat(td.dataset.qty) * k;
+    td.textContent = fmt(p);
+    const inp = document.getElementById('actual_' + td.dataset.item);
+    if (!inp.dataset.dirty) inp.value = fmt(p);
+  });
+}
+b.addEventListener('input', update);
+document.querySelectorAll('.actual').forEach(i => i.addEventListener('input', () => { i.dataset.dirty = 1; }));
+update();
+</script>
+{% endblock %}

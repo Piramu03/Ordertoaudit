@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>Invoices</h2>
+  <div class="scroll"><table>
+    <tr><th>Invoice</th><th>Date</th><th>Customer</th><th>Total</th><th>Outstanding</th><th>Status</th></tr>
+    {% for i in invoices %}
+    <tr>
+      <td>{% if user.role == "admin" %}<a href="{% url 'sales:invoice_detail' i.pk %}">{{ i.number }}</a>
+          {% else %}<a href="{% url 'sales:invoice_pdf' i.pk %}">{{ i.number }}</a>{% endif %}</td>
+      <td>{{ i.date|date:"d M Y" }}</td><td>{{ i.customer.name }}</td>
+      <td>Rs. {{ i.total }}</td><td>Rs. {{ i.outstanding }}</td>
+      <td><span class="badge {{ i.status }}">{{ i.get_status_display }}</span></td>
+    </tr>
+    {% empty %}<tr><td colspan="6" class="muted">No invoices yet.</td></tr>{% endfor %}
+  </table></div>
+</div>
+{% endblock %}

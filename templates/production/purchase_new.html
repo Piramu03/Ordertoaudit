@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>Record purchase</h2>
+  <form method="post">{% csrf_token %}
+    <label>Supplier
+      <select name="supplier" required>
+        <option value="">Select supplier</option>
+        {% for s in suppliers %}<option value="{{ s.pk }}">{{ s.name }}</option>{% endfor %}
+      </select></label>
+
+    <label>Item
+      <select name="item" required>
+        <option value="">Select item</option>
+        {% for i in items %}<option value="{{ i.pk }}">{{ i.name }} ({{ i.base_unit }})</option>{% endfor %}
+      </select></label>
+
+    <label>Quantity
+      <input type="number" step="any" min="0" name="qty" required></label>
+
+    <label>Unit
+      <select name="unit">
+        <option value="">Item's own unit</option>
+        {% for u in unit_choices %}<option value="{{ u }}">{{ u }}</option>{% endfor %}
+      </select></label>
+
+    <label>Rate per item unit (Rs.)
+      <input type="number" step="0.01" min="0" name="rate" required></label>
+
+    <label>Supplier invoice no. (optional)
+      <input name="invoice_no"></label>
+
+    <button class="btn" type="submit">Save purchase</button>
+  </form>
+  <p class="muted">The rate is always per the item's own unit shown in brackets (for example per kg for flour). If you enter the quantity in another unit of the same kind, such as grams for a kg item, it is converted automatically.</p>
+</div>
+
+<div class="card">
+  <h3>Recent purchases</h3>
+  <div class="scroll"><table>
+    <tr><th>No.</th><th>Date</th><th>Supplier</th><th>Item</th><th>Qty</th><th>Rate</th><th>Amount</th></tr>
+    {% for p in recent %}
+    <tr>
+      <td>PUR-{{ p.pk }}</td>
+      <td>{{ p.date|date:"d M Y" }}</td>
+      <td>{{ p.supplier.name }}</td>
+      <td>{{ p.item.name }}</td>
+      <td>{{ p.qty|floatformat:"-3" }} {{ p.item.base_unit }}</td>
+      <td>{{ p.rate }}</td>
+      <td>{{ p.amount }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="7" class="muted">No purchases yet.</td></tr>
+    {% endfor %}
+  </table></div>
+</div>
+{% endblock %}

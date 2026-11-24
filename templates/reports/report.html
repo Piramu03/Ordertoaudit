@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <p><a href="{% url 'reports:index' %}?{{ qs }}">&larr; All reports</a></p>
+  <h2>{{ report.title }}</h2>
+  <p class="muted">{{ period }}</p>
+
+  <form method="get">
+    <label style="display:inline-block;width:48%">From <input type="date" name="from" value="{{ start|date:'Y-m-d' }}"></label>
+    <label style="display:inline-block;width:48%">To <input type="date" name="to" value="{{ end|date:'Y-m-d' }}"></label>
+    {% if items %}
+    <label>Item
+      <select name="item"><option value="">All items</option>
+        {% for i in items %}<option value="{{ i.pk }}" {% if i.pk|stringformat:"s" == item_id %}selected{% endif %}>{{ i.name }}</option>{% endfor %}
+      </select></label>
+    {% endif %}
+    <button class="btn alt" type="submit">Apply</button>
+  </form>
+
+  <p>
+    <a class="btn" href="?{{ qs }}&format=xlsx">Excel</a>
+    <a class="btn" href="?{{ qs }}&format=csv">CSV</a>
+    <a class="btn" href="?{{ qs }}&format=pdf">PDF</a>
+  </p>
+  {% if report.note %}<p class="muted">{{ report.note }}</p>{% endif %}
+
+  <div class="scroll"><table>
+    <tr>{% for h in report.headers %}<th>{{ h }}</th>{% endfor %}</tr>
+    {% for row in rows %}
+      <tr>{% for text, num in row %}<td {% if num %}style="text-align:right"{% endif %}>{{ text }}</td>{% endfor %}</tr>
+    {% empty %}
+      <tr><td colspan="{{ report.headers|length }}" class="muted">No data for this period.</td></tr>
+    {% endfor %}
+    {% if totals %}
+      <tr style="font-weight:700;background:#f4f5f7">
+        {% for text, num in totals %}<td {% if num %}style="text-align:right"{% endif %}>{{ text }}</td>{% endfor %}
+      </tr>
+    {% endif %}
+  </table></div>
+</div>
+{% endblock %}

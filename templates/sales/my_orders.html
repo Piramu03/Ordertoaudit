@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>My orders</h2>
+  {% for o in orders %}
+  <div class="row">
+    <div>
+      <strong>ORD-{{ o.pk }}</strong> · {{ o.customer.name }}<br>
+      <span class="muted">{{ o.created_at|date:"d M Y H:i" }} ·
+      {% for l in o.lines.all %}{{ l.item.name }} × {{ l.qty|floatformat:"-3" }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
+    </div>
+    <div style="text-align:right">
+      Rs. {{ o.amount }}<br><span class="badge {{ o.status }}">{{ o.get_status_display }}</span>
+    </div>
+  </div>
+  {% empty %}<p class="muted">No orders yet.</p>{% endfor %}
+</div>
+<div class="card">
+  <h2>Customer-wise sales (invoiced, with tax)</h2>
+  {% for s in sales %}
+    <div class="row"><span>{{ s.customer__name }}</span><strong>Rs. {{ s.total }}</strong></div>
+  {% empty %}<p class="muted">No invoiced sales yet.</p>{% endfor %}
+</div>
+{% endblock %}

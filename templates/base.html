@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Order-to-Audit{% endblock %}</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,"Segoe UI",Arial,sans-serif;background:#f4f5f7;color:#1c1e21}
+header{background:#7a1f1f;color:#fff;padding:10px 14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+header a{color:#fff;text-decoration:none;margin-right:14px}
+header button{background:transparent;color:#fff;border:1px solid #fff;border-radius:6px;padding:6px 10px}
+main{max-width:900px;margin:0 auto;padding:14px}
+.card{background:#fff;border-radius:10px;padding:14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.narrow{max-width:380px;margin:30px auto}
+label{display:block;margin:10px 0;font-weight:600}
+input,select{width:100%;padding:12px;font-size:16px;border:1px solid #bbb;border-radius:8px;margin-top:4px}
+.btn{display:inline-block;background:#7a1f1f;color:#fff;border:0;border-radius:8px;padding:12px 18px;font-size:16px;cursor:pointer;text-decoration:none;margin:4px 4px 4px 0}
+.btn.alt{background:#555}.btn.ok{background:#1b7a3d}.btn.bad{background:#b42318}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #eee}
+.row input{width:100px;text-align:right}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:8px;border-bottom:1px solid #eee;text-align:left}
+td input{width:100px;padding:6px;font-size:14px}
+.scroll{overflow-x:auto}
+.muted{color:#666;font-size:13px}.err{color:#b42318}.good{color:#1b7a3d}
+.badge{padding:2px 8px;border-radius:10px;font-size:12px;background:#ddd}
+.submitted{background:#ffe9a8}.approved{background:#cfe8ff}.invoiced{background:#e3d5ff}
+.dispatched,.posted{background:#c8f0d2}.rejected,.cancelled{background:#f6c9c9}
+.msg{padding:10px 12px;border-radius:8px;margin-bottom:10px;background:#e8f5e9}
+.msg.error{background:#fdecea}
+.total{font-size:18px;font-weight:700}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <strong>Sri Murugan Snacks</strong>&nbsp;&nbsp;
+    {% if user.is_authenticated %}
+      {% if user.role == "salesman" %}
+        <a href="{% url 'sales:new_order' %}">New order</a>
+        <a href="{% url 'sales:my_orders' %}">My orders</a>
+      {% endif %}
+      {% if user.role == "admin" %}
+        <a href="{% url 'sales:admin_orders' %}">Orders</a>
+      {% endif %}
+      {% if user.role == "admin" or user.role == "auditor" or user.role == "owner" %}
+        <a href="{% url 'reports:dashboard' %}">Dashboard</a>
+        <a href="{% url 'sales:invoice_list' %}">Invoices</a>
+        <a href="{% url 'reports:index' %}">Reports</a>
+        <a href="{% url 'audit_log' %}">Audit log</a>
+      {% endif %}
+      {% if user.role == "production" or user.role == "admin" %}
+        <a href="{% url 'production:purchase_new' %}">Purchase</a>
+        <a href="{% url 'production:run_new' %}">New run</a>
+      {% endif %}
+      {% if user.role != "salesman" %}
+        <a href="{% url 'production:run_list' %}">Runs</a>
+        <a href="{% url 'inventory:summary' %}">Stock</a>
+      {% endif %}
+    {% endif %}
+  </div>
+  {% if user.is_authenticated %}
+  <form method="post" action="{% url 'logout' %}">{% csrf_token %}
+    <button type="submit">Logout ({{ user.username }})</button>
+  </form>
+  {% endif %}
+</header>
+<main>
+  {% for message in messages %}
+    <div class="msg {{ message.tags }}">{{ message }}</div>
+  {% endfor %}
+  {% block content %}{% endblock %}
+</main>
+</body>
+</html>

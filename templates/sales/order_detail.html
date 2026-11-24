@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>ORD-{{ order.pk }} <span class="badge {{ order.status }}">{{ order.get_status_display }}</span></h2>
+  <p>{{ order.customer.name }} ({{ order.customer.state }}) · Salesman: {{ order.salesman.username }}
+     · {{ order.created_at|date:"d M Y H:i" }}</p>
+
+  {% if has_shortage and order.status == "submitted" %}
+    <p class="err"><strong>Stock does not cover this order.</strong>
+    Reduce the quantity, reject it, or wait for production.</p>
+  {% endif %}
+
+  <form method="post">{% csrf_token %}
+  <div class="scroll"><table>
+    <tr><th>Item</th><th>Qty</th><th>Rate (Rs.)</th><th>In stock</th><th>Stock check</th></tr>
+    {% for line, chk in rows %}
+    <tr>
+      <td>{{ line.item.name }}</td>
+      <td>{% if order.status == "submitted" %}
+        <input type="number" step="any" min="0" name="qty_{{ line.id }}" value="{{ line.qty|floatformat:'-3u' }}">
+        {% else %}{{ line.qty|floatformat:"-3" }}{% endif %}</td>
+      <td>{% if order.status == "submitted" %}
+        <input type="number" step="0.01" min="0" name="rate_{{ line.id }}" value="{{ line.rate|floatformat:'2u' }}">
+        {% else %}{{ line.rate }}{% endif %}</td>
+      <td>{{ chk.available|floatformat:"-3" }}</td>
+      <td>{% if chk.shortage > 0 %}<span class="err">Short by {{ chk.shortage|floatformat:"-3" }}</span>
+          {% else %}<span class="good">OK</span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </table></div>
+  <p class="total">Order value before tax: Rs. {{ order.amount }}</p>
+
+  {% if order.status == "submitted" %}
+    <button class="btn alt" name="action" value="save">Save changes</button>
+    <button class="btn ok" name="action" value="approve">Approve</button>
+    <label>Reason (if rejecting) <input name="reason"></label>
+    <button class="btn bad" name="action" value="reject">Reject</button>
+  {% elif order.status == "approved" %}
+    <button class="btn ok" name="action" value="invoice">Create GST invoice</button>
+  {% endif %}
+  </form>
+
+  {% if invoice %}
+    <p><a class="btn" href="{% url 'sales:invoice_detail' invoice.pk %}">Open invoice {{ invoice.number }}</a></p>
+  {% endif %}
+  {% if order.remarks %}<p class="muted">Remarks: {{ order.remarks }}</p>{% endif %}
+</div>
+{% endblock %}

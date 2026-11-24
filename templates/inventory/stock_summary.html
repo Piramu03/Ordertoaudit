@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+{% for label, rows in groups %}
+<div class="card">
+  <h3>{{ label }}</h3>
+  <div class="scroll"><table>
+    <tr><th>Item</th><th>Balance</th><th>Unit</th><th></th></tr>
+    {% for item, bal in rows %}
+    <tr><td>{{ item.name }}</td><td><strong>{{ bal|floatformat:"-3" }}</strong></td><td>{{ item.base_unit }}</td>
+        <td><a href="{% url 'inventory:ledger' item.pk %}">Ledger</a></td></tr>
+    {% empty %}<tr><td colspan="4" class="muted">None.</td></tr>{% endfor %}
+  </table></div>
+</div>
+{% endfor %}
+{% endblock %}

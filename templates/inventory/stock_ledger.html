@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>Stock ledger: {{ item.name }}</h2>
+  <p><a href="{% url 'inventory:summary' %}">&larr; Stock summary</a></p>
+  <div class="scroll"><table>
+    <tr><th>Date</th><th>Type</th><th>Source</th><th>In/Out</th><th>Balance</th><th>By</th></tr>
+    {% for r, bal in rows %}
+    <tr>
+      <td>{{ r.created_at|date:"d M Y H:i" }}</td><td>{{ r.get_move_type_display }}</td>
+      <td>{{ r.source_type }}{% if r.source_id %} #{{ r.source_id }}{% endif %}</td>
+      <td class="{% if r.qty < 0 %}err{% else %}good{% endif %}">{{ r.qty|floatformat:"-3" }}</td>
+      <td>{{ bal|floatformat:"-3" }}</td><td>{{ r.created_by.username }}</td>
+    </tr>
+    {% endfor %}
+  </table></div>
+  <p class="total">Closing balance: {{ closing|floatformat:"-3" }} {{ item.base_unit }}</p>
+</div>
+{% endblock %}

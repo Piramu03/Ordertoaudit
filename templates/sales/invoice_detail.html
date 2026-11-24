@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>{{ invoice.number }} <span class="badge {{ invoice.status }}">{{ invoice.get_status_display }}</span></h2>
+  <p>{{ invoice.customer.name }} · GSTIN {{ invoice.customer.gstin|default:"-" }} ·
+     Place of supply: {{ invoice.customer.state }} ({{ invoice.place_of_supply }}) ·
+     {{ invoice.date|date:"d M Y" }}</p>
+  <div class="scroll"><table>
+    <tr><th>Item</th><th>HSN</th><th>Qty</th><th>Rate</th><th>Taxable</th><th>CGST</th><th>SGST</th><th>IGST</th></tr>
+    {% for l in lines %}
+    <tr><td>{{ l.item.name }}</td><td>{{ l.hsn_code }}</td><td>{{ l.qty|floatformat:"-3" }}</td>
+        <td>{{ l.rate }}</td><td>{{ l.taxable_value }}</td><td>{{ l.cgst }}</td><td>{{ l.sgst }}</td><td>{{ l.igst }}</td></tr>
+    {% endfor %}
+  </table></div>
+  <p>Taxable Rs. {{ invoice.taxable_value }} · CGST {{ invoice.cgst }} · SGST {{ invoice.sgst }} · IGST {{ invoice.igst }}</p>
+  <p class="total">Total Rs. {{ invoice.total }} · Paid Rs. {{ invoice.paid }} · Outstanding Rs. {{ invoice.outstanding }}</p>
+  <a class="btn" href="{% url 'sales:invoice_pdf' invoice.pk %}" target="_blank">Download PDF</a>
+  <a class="btn ok" href="{{ share_url }}" target="_blank">Share on WhatsApp</a>
+</div>
+
+<div class="card">
+  <h3>Dispatch</h3>
+  {% if invoice.dispatched_at %}
+    <p class="good">Dispatched on {{ invoice.dispatched_at|date:"d M Y H:i" }}. Stock was reduced.</p>
+  {% elif invoice.status == "posted" %}
+    <form method="post">{% csrf_token %}
+      <button class="btn ok" name="action" value="dispatch">Record dispatch (reduces stock)</button>
+    </form>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h3>Payments</h3>
+  {% for p in payments %}
+    <div class="row"><span>{{ p.date|date:"d M Y" }} · {{ p.mode }} {{ p.reference }}</span><strong>Rs. {{ p.amount }}</strong></div>
+  {% empty %}<p class="muted">No payments yet.</p>{% endfor %}
+  {% if invoice.outstanding > 0 and invoice.status == "posted" %}
+  <form method="post">{% csrf_token %}
+    <label>Amount (Rs.) <input type="number" step="0.01" min="0.01" name="amount" required></label>
+    <label>Mode <select name="mode"><option>cash</option><option>upi</option><option>bank</option></select></label>
+    <label>Reference <input name="reference"></label>
+    <button class="btn" name="action" value="payment">Record payment</button>
+  </form>
+  {% endif %}
+</div>
+{% if invoice.status == "posted" %}
+<div class="card">
+  <h3>Cancel invoice (credit note)</h3>
+  <p class="muted">A posted invoice is never deleted. It is cancelled with a credit note. If it was dispatched, the goods return to stock. Record any payment refund first.</p>
+  <form method="post" onsubmit="return confirm('Cancel this invoice and issue a credit note?')">{% csrf_token %}
+    <label>Reason <input name="reason" required></label>
+    <button class="btn bad" name="action" value="cancel">Cancel with credit note</button>
+  </form>
+</div>
+{% elif invoice.status == "cancelled" %}
+<div class="card">
+  <h3>Credit note {{ invoice.credit_note.number }}</h3>
+  <p>{{ invoice.credit_note.date|date:"d M Y" }} · Rs. {{ invoice.credit_note.total }} · Reason: {{ invoice.credit_note.reason }}</p>
+</div>
+{% endif %}
+{% endblock %}

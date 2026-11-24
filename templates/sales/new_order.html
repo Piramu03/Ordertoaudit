@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+<h2>New order</h2>
+{% if not customers %}
+  <p class="err">No customers are assigned to you. Ask the admin.</p>
+{% else %}
+<form method="post">{% csrf_token %}
+  <label>Customer
+    <select name="customer" required>
+      <option value="">Select customer</option>
+      {% for c in customers %}
+        <option value="{{ c.pk }}">{{ c.name }} ({{ c.get_kind_display }})</option>
+      {% endfor %}
+    </select>
+  </label>
+  {% for item in items %}
+  <div class="row">
+    <div><strong>{{ item.name }}</strong><br>
+      <span class="muted">Rs. {{ item.selling_price }} per {{ item.base_unit }}</span></div>
+    <input type="number" inputmode="numeric" min="0" step="1" placeholder="0"
+           name="qty_{{ item.id }}" class="qty" data-price="{{ item.selling_price }}">
+  </div>
+  {% endfor %}
+  <p class="total">Total before tax: Rs. <span id="total">0.00</span></p>
+  <button class="btn" type="submit">Submit order</button>
+</form>
+<script>
+const qs = document.querySelectorAll('.qty'), t = document.getElementById('total');
+function calc(){ let s = 0;
+  qs.forEach(q => { s += (parseFloat(q.value) || 0) * parseFloat(q.dataset.price); });
+  t.textContent = s.toFixed(2); }
+qs.forEach(q => q.addEventListener('input', calc));
+</script>
+{% endif %}
+</div>
+{% endblock %}

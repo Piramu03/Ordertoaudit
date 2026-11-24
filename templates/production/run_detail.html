@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>RUN-{{ run.pk }} · {{ run.product.name }}</h2>
+  {% if run.status == "reversed" %}
+    <p class="err"><strong>REVERSED</strong> on {{ run.reversed_at|date:"d M Y H:i" }}. Reason: {{ run.reverse_reason }}</p>
+  {% endif %}
+  <p class="muted">{{ run.date|date:"d M Y" }} · {{ run.batches|floatformat:"-3" }} batch(es) · entered by {{ run.created_by.username }}</p>
+
+  <h3>Yield</h3>
+  <p>Expected <strong>{{ run.expected_output }}</strong> · Actual <strong>{{ run.actual_output }}</strong> ·
+     Variance <strong class="{% if run.yield_flagged %}err{% endif %}">{{ run.yield_variance_pct }}%</strong>
+     {% if run.yield_flagged %}<span class="err">FLAGGED (beyond tolerance)</span>{% endif %}</p>
+
+  <h3>Planned vs actual consumption</h3>
+  <div class="scroll"><table>
+    <tr><th>Material</th><th>Planned</th><th>Actual</th><th>Wasted</th><th>Variance</th><th>Rate</th><th>Cost</th></tr>
+    {% for l in lines %}
+    <tr>
+      <td>{{ l.item.name }}</td>
+      <td>{{ l.planned_qty|floatformat:"-3" }}</td><td>{{ l.actual_qty|floatformat:"-3" }}</td>
+      <td>{{ l.wastage_qty|floatformat:"-3" }}</td>
+      <td>{% if l.flagged %}<span class="err">{{ l.variance_pct }}% FLAGGED</span>{% else %}{{ l.variance_pct }}%{% endif %}</td>
+      <td>{{ l.unit_cost|floatformat:"2" }}</td><td>{{ l.cost|floatformat:"2" }}</td>
+    </tr>
+    {% endfor %}
+  </table></div>
+  <p class="muted">Material over-use is flagged when it exceeds the BOM tolerance. Yield is flagged when output falls short beyond the tolerance. Rates are weighted-average purchase rates.</p>
+</div>
+
+<div class="card">
+  <h3>Costing</h3>
+  <p>Materials and packaging: Rs. {{ run.material_cost|floatformat:"2" }}</p>
+  <p>Labour: Rs. {{ run.labour_cost }} · Gas/power: Rs. {{ run.power_cost }}</p>
+  <p class="total">Total run cost: Rs. {{ run.total_cost|floatformat:"2" }}</p>
+  <p class="total">Cost per packet: Rs. {{ cpp }}
+     <span class="muted">(total cost ÷ {{ run.actual_output }} good packets)</span></p>
+  {% if price %}
+  <p>Selling price Rs. {{ price }} · Margin Rs. {{ margin }} per packet ({{ margin_pct }}%)</p>
+  {% endif %}
+
+  {% if user.role == "production" or user.role == "admin" %}
+  <form method="post" action="{% url 'production:run_costs' run.pk %}">{% csrf_token %}
+    <label>Labour (Rs.) <input type="number" step="0.01" min="0" name="labour" value="{{ run.labour_cost }}"></label>
+    <label>Gas / power (Rs.) <input type="number" step="0.01" min="0" name="power" value="{{ run.power_cost }}"></label>
+    <button class="btn" type="submit">Save overheads</button>
+  </form>
+  {% endif %}
+</div>
+
+{% if run.status == "posted" %}{% if user.role == "production" or user.role == "admin" %}
+<div class="card">
+  <h3>Reverse this run</h3>
+  <p class="muted">Use this if the run was entered wrongly. Materials go back to stock and the finished packets are removed. Then enter the run again correctly.</p>
+  <form method="post" action="{% url 'production:run_reverse' run.pk %}" onsubmit="return confirm('Reverse this run?')">{% csrf_token %}
+    <label>Reason <input name="reason" required></label>
+    <button class="btn bad" type="submit">Reverse run</button>
+  </form>
+</div>
+{% endif %}{% endif %}
+{% endblock %}
