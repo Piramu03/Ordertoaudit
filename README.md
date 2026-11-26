@@ -1,3 +1,5 @@
+
+
 # Order-to-Audit System: Sri Murugan Snacks (prototype)
 
 A working prototype that takes a small snack factory from a **salesman's order** to the **monthly auditor's report**. Every transaction is entered once, at its source, and flows into stock, production, costing and accounts.
@@ -8,10 +10,8 @@ Built by **Piramu** for the NIT Tiruchirappalli (Centre for Digital Infrastructu
 
 | Item | Link |
 |---|---|
-| Repository | [paste GitHub URL] |
-| Demo video (max 8 min) | [paste unlisted YouTube/Drive URL] |
-| Live demo | [paste hosted URL, or "run locally, see below"] |
-| Design note | [`DESIGN.md`](DESIGN.md) |
+| Repository | [https://github.com/Piramu03/Ordertoaudit] |
+| Demo video (max 8 min) | [https://drive.google.com/file/d/1X4gZz7b-weNTkoOj5qS6TGUEw5wwFsJz/view?usp=drivesdk] |
 
 ## How the system fits together
 
@@ -27,15 +27,7 @@ Both loops feed the reports: sales register, GST, stock ledger, production varia
 
 ## Run it
 
-### Option 1: Docker (one command)
-
-```bash
-docker compose up --build
-```
-
-Open http://127.0.0.1:8000/. The database is migrated and the section 5 benchmark data is loaded automatically.
-
-### Option 2: Locally
+### Option 1: Locally
 
 Requirements: Python 3.11+, MySQL 8.
 
@@ -148,8 +140,6 @@ Cost per packet = 5,855 / **188 good packets** = **Rs. 31.14** (divided by actua
 **Why this method:** weighted average is stable and easy to explain to an auditor. FIFO would use the cheaper Rs. 42 opening flour first and give about Rs. 30.90 per packet; the difference comes only from the valuation method. **Overhead rule:** labour and gas/power are entered per run and charged fully to that run's product (one product in the benchmark).
 
 ## Design in brief
-
-Full details with the data model are in [`DESIGN.md`](DESIGN.md).
 
 - **Stock is a ledger.** A balance is always the sum of `StockLedger` rows (opening, purchase, production issue, wastage, production output, dispatch, sales return, reversal, adjustment). Nothing overwrites a balance. Each row stores its source document type and id, so every movement is traceable.
 - **Money and quantities use `Decimal`**, never floats. GST is rounded half-up to the paisa per line, and SGST is computed as tax minus CGST so the two always add up exactly.
